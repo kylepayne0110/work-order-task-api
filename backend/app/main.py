@@ -194,3 +194,43 @@ def list_work_order_tasks(
         .filter(WorkOrderTask.work_order_id == work_order_id)
         .all()
     )
+
+@app.patch("/tasks/{task_id}/complete", response_model=WorkOrderTaskResponse)
+def complete_work_order_task(
+    task_id: int,
+    database: Session = Depends(get_database_session),
+):
+    task = (
+        database.query(WorkOrderTask)
+        .filter(WorkOrderTask.id == task_id)
+        .first()
+    )
+
+    if task is None:
+        raise HTTPException(status_code=404, detail="Task not found")
+
+    task.is_complete = True
+
+    database.commit()
+    database.refresh(task)
+
+    return task
+
+@app.delete("/tasks/{task_id}")
+def delete_work_order_task(
+    task_id: int,
+    database: Session = Depends(get_database_session),
+):
+    task = (
+        database.query(WorkOrderTask)
+        .filter(WorkOrderTask.id == task_id)
+        .first()
+    )
+
+    if task is None:
+        raise HTTPException(status_code=404, detail="Task not found")
+
+    database.delete(task)
+    database.commit()
+
+    return {"message": "Task deleted"}
