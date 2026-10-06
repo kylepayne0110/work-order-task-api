@@ -6,8 +6,14 @@ from app.database import (
     get_database_session,
     test_database_connection,
 )
-from app.models import WorkOrder
-from app.schemas import WorkOrderCreate, WorkOrderResponse, WorkOrderUpdate
+from app.models import WorkOrder, WorkOrderTask
+from app.schemas import (
+    WorkOrderCreate,
+    WorkOrderResponse,
+    WorkOrderTaskCreate,
+    WorkOrderTaskResponse,
+    WorkOrderUpdate,
+)
 
 app = FastAPI(title="Work Order Task API")
 
@@ -135,3 +141,56 @@ def update_work_order(
 
     return work_order
 
+
+@app.post(
+    "/work-orders/{work_order_id}/tasks",
+    response_model=WorkOrderTaskResponse,
+)
+def create_work_order_task(
+    work_order_id: int,
+    task: WorkOrderTaskCreate,
+    database: Session = Depends(get_database_session),
+):
+    work_order = (
+        database.query(WorkOrder)
+        .filter(WorkOrder.id == work_order_id)
+        .first()
+    )
+
+    if work_order is None:
+        raise HTTPException(status_code=404, detail="Work order not found")
+
+    new_task = WorkOrderTask(
+        work_order_id=work_order_id,
+        title=task.title,
+        description=task.description,
+    )
+
+    database.add(new_task)
+    database.commit()
+    database.refresh(new_task)
+
+    return new_task
+
+@app.get(
+    "/work-orders/{work_order_id}/tasks",
+    response_model=list[WorkOrderTaskResponse],
+)
+def list_work_order_tasks(
+    work_order_id: int,
+    database: Session = Depends(get_database_session),
+):
+    work_order = (
+        database.query(WorkOrder)
+        .filter(WorkOrder.id == work_order_id)
+        .first()
+    )
+
+    if work_order is None:
+        raise HTTPException(status_code=404, detail="Work order not found")
+
+    return (
+        database.query(WorkOrderTask)
+        .filter(WorkOrderTask.work_order_id == work_order_id)
+        .all()
+    )

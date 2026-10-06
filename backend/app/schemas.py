@@ -14,7 +14,7 @@ class WorkOrderUpdate(BaseModel):
     status: str = Field(max_length=20)
     priority: str = Field(max_length=20)
     is_complete: bool
-    
+
 
 class WorkOrderResponse(BaseModel):
     id: int
@@ -22,6 +22,21 @@ class WorkOrderResponse(BaseModel):
     description: str | None
     status: str
     priority: str
+    is_complete: bool
+
+    class Config:
+        from_attributes = True
+
+class WorkOrderTaskCreate(BaseModel):
+    title: str = Field(min_length=1, max_length=100)
+    description: str | None = Field(default=None, max_length=500)
+
+
+class WorkOrderTaskResponse(BaseModel):
+    id: int
+    work_order_id: int
+    title: str
+    description: str | None
     is_complete: bool
 
     class Config:
