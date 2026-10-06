@@ -7,7 +7,7 @@ from app.database import (
     test_database_connection,
 )
 from app.models import WorkOrder
-from app.schemas import WorkOrderCreate, WorkOrderResponse
+from app.schemas import WorkOrderCreate, WorkOrderResponse, WorkOrderUpdate
 
 app = FastAPI(title="Work Order Task API")
 
@@ -108,3 +108,30 @@ def delete_work_order(
     database.commit()
 
     return {"message": "Work order deleted"}
+
+@app.put("/work-orders/{work_order_id}", response_model=WorkOrderResponse)
+def update_work_order(
+    work_order_id: int,
+    updated_work_order: WorkOrderUpdate,
+    database: Session = Depends(get_database_session),
+):
+    work_order = (
+        database.query(WorkOrder)
+        .filter(WorkOrder.id == work_order_id)
+        .first()
+    )
+
+    if work_order is None:
+        raise HTTPException(status_code=404, detail="Work order not found")
+
+    work_order.title = updated_work_order.title
+    work_order.description = updated_work_order.description
+    work_order.status = updated_work_order.status
+    work_order.priority = updated_work_order.priority
+    work_order.is_complete = updated_work_order.is_complete
+
+    database.commit()
+    database.refresh(work_order)
+
+    return work_order
+
