@@ -15,13 +15,23 @@ from app.schemas import (
     WorkOrderUpdate,
 )
 
+from pathlib import Path
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
+
 app = FastAPI(title="Work Order Task API")
+
+BASE_DIR = Path(__file__).resolve().parent
+app.mount("/static", StaticFiles(directory=BASE_DIR / "static"), name="static")
 
 
 @app.on_event("startup")
 def on_startup():
     create_database_tables()
 
+@app.get("/")
+def read_frontend():
+    return FileResponse(BASE_DIR / "static" / "index.html")
 
 @app.get("/health")
 def health_check():
