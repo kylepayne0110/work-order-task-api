@@ -12,6 +12,7 @@ from app.schemas import (
     WorkOrderResponse,
     WorkOrderTaskCreate,
     WorkOrderTaskResponse,
+    WorkOrderTaskUpdate,
     WorkOrderUpdate,
 )
 
@@ -244,3 +245,27 @@ def delete_work_order_task(
     database.commit()
 
     return {"message": "Task deleted"}
+
+@app.put("/tasks/{task_id}", response_model=WorkOrderTaskResponse)
+def update_work_order_task(
+    task_id: int,
+    updated_task: WorkOrderTaskUpdate,
+    database: Session = Depends(get_database_session),
+):
+    task = (
+        database.query(WorkOrderTask)
+        .filter(WorkOrderTask.id == task_id)
+        .first()
+    )
+
+    if task is None:
+        raise HTTPException(status_code=404, detail="Task not found")
+
+    task.title = updated_task.title
+    task.description = updated_task.description
+    task.is_complete = updated_task.is_complete
+
+    database.commit()
+    database.refresh(task)
+
+    return task

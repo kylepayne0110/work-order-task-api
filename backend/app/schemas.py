@@ -41,3 +41,9 @@ class WorkOrderTaskResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class WorkOrderTaskUpdate(BaseModel):
+    title: str = Field(min_length=1, max_length=100)
+    description: str | None = Field(default=None, max_length=500)
+    is_complete: bool
