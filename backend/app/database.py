@@ -4,6 +4,8 @@ from dotenv import load_dotenv
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 
+from app.models import Base
+
 load_dotenv()
 
 MYSQL_USER = os.getenv("MYSQL_USER")
@@ -28,3 +30,15 @@ def test_database_connection():
     with engine.connect() as connection:
         result = connection.execute(text("SELECT 1"))
         return result.scalar()
+
+
+def create_database_tables():
+    Base.metadata.create_all(bind=engine)
+
+
+def get_database_session():
+    database = SessionLocal()
+    try:
+        yield database
+    finally:
+        database.close()
