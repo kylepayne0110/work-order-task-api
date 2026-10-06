@@ -65,7 +65,7 @@ def get_work_order(
     if work_order is None:
         raise HTTPException(status_code=404, detail="Work order not found")
 
-    return work_orders
+    return work_order
 
 
 @app.patch("/work-orders/{work_order_id}/complete", response_model=WorkOrderResponse)
@@ -89,3 +89,22 @@ def complete_work_order(
     database.refresh(work_order)
 
     return work_order
+
+@app.delete("/work-orders/{work_order_id}")
+def delete_work_order(
+    work_order_id: int,
+    database: Session = Depends(get_database_session),
+):
+    work_order = (
+        database.query(WorkOrder)
+        .filter(WorkOrder.id == work_order_id)
+        .first()
+    )
+
+    if work_order is None:
+        raise HTTPException(status_code=404, detail="Work order not found")
+
+    database.delete(work_order)
+    database.commit()
+
+    return {"message": "Work order deleted"}
