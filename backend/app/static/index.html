@@ -6,6 +6,81 @@
 </head>
 <body>
     <h1>Work Order Task App</h1>
-    <p>If you can see this page, the frontend is being served by FastAPI.</p>
+
+    <h2>Create Work Order</h2>
+
+    <form id="work-order-form">
+        <div>
+            <label for="title">Title</label>
+            <input id="title" name="title" type="text" required>
+        </div>
+
+        <div>
+            <label for="description">Description</label>
+            <input id="description" name="description" type="text">
+        </div>
+
+        <div>
+            <label for="priority">Priority</label>
+            <select id="priority" name="priority">
+                <option value="normal">Normal</option>
+                <option value="high">High</option>
+                <option value="low">Low</option>
+            </select>
+        </div>
+
+        <button type="submit">Create Work Order</button>
+    </form>
+
+    <h2>Work Orders</h2>
+    <button id="refresh-button">Refresh Work Orders</button>
+    <ul id="work-orders-list"></ul>
+
+    <script>
+        const form = document.getElementById("work-order-form");
+        const refreshButton = document.getElementById("refresh-button");
+        const workOrdersList = document.getElementById("work-orders-list");
+
+        async function loadWorkOrders() {
+            const response = await fetch("/work-orders");
+            const workOrders = await response.json();
+
+            workOrdersList.innerHTML = "";
+
+            for (const workOrder of workOrders) {
+                const item = document.createElement("li");
+                item.textContent = `${workOrder.id}: ${workOrder.title} - ${workOrder.status} - ${workOrder.priority}`;
+                workOrdersList.appendChild(item);
+            }
+        }
+
+        form.addEventListener("submit", async function (event) {
+            event.preventDefault();
+
+            const formData = new FormData(form);
+
+            const workOrder = {
+                title: formData.get("title"),
+                description: formData.get("description"),
+                status: "open",
+                priority: formData.get("priority")
+            };
+
+            await fetch("/work-orders", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(workOrder)
+            });
+
+            form.reset();
+            await loadWorkOrders();
+        });
+
+        refreshButton.addEventListener("click", loadWorkOrders);
+
+        loadWorkOrders();
+    </script>
 </body>
 </html>
