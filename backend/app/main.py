@@ -1,4 +1,4 @@
-from fastapi import Depends, FastAPI
+from fastapi import Depends, FastAPI, HTTPException
 from sqlalchemy.orm import Session
 
 from app.database import (
@@ -50,3 +50,42 @@ def create_work_order(
 @app.get("/work-orders", response_model=list[WorkOrderResponse])
 def list_work_orders(database: Session = Depends(get_database_session)):
     return database.query(WorkOrder).all()
+
+@app.get("/work-orders/{work_order_id}", response_model=WorkOrderResponse)
+def get_work_order(
+    work_order_id: int,
+    database: Session = Depends(get_database_session),
+):
+    work_order = (
+        database.query(WorkOrder)
+        .filter(WorkOrder.id == work_order_id)
+        .first()
+    )
+
+    if work_order is None:
+        raise HTTPException(status_code=404, detail="Work order not found")
+
+    return work_orders
+
+
+@app.patch("/work-orders/{work_order_id}/complete", response_model=WorkOrderResponse)
+def complete_work_order(
+    work_order_id: int,
+    database: Session = Depends(get_database_session),
+):
+    work_order = (
+        database.query(WorkOrder)
+        .filter(WorkOrder.id == work_order_id)
+        .first()
+    )
+
+    if work_order is None:
+        raise HTTPException(status_code=404, detail="Work order not found")
+
+    work_order.is_complete = True
+    work_order.status = "complete"
+
+    database.commit()
+    database.refresh(work_order)
+
+    return work_order
